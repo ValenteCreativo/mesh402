@@ -13,7 +13,7 @@ $('#app').innerHTML = `
 <header class="topbar"><a class="brand" href="#" aria-label="Mesh402 home">${icon}<span>MESH402</span></a><nav aria-label="Main navigation"><a href="#machine" class="nav-active">THE MACHINE</a><a href="#protocol">THE PROTOCOL ↗</a></nav><span class="system-status"><i></i> SYSTEM OPERATIONAL</span></header>
 <main>
 <section class="hero-heading"><div><div class="eyebrow">AUTONOMOUS FABRICATION PROTOCOL <span>/ 001</span></div><h1>MESH<span>402</span></h1></div><div class="hero-description"><p>3D infrastructure<br>for autonomous agents.</p><span class="mono">INTENT IN. <b>ASSET OUT.</b></span></div></section>
-<section class="machine" id="machine" aria-label="Mesh402 execution machine">
+<section class="machine replay-view" id="machine" aria-label="Mesh402 execution machine">
   <div class="machine-bar"><span><i class="signal"></i> FABRICATION UNIT <b>M—01</b></span><div class="mode-switch" role="group" aria-label="Execution source"><button id="replay-mode" aria-pressed="true">REPLAY</button><button id="live-mode" aria-pressed="false">LIVE <i></i></button></div><span id="source-label">VERIFIED RUN · NO NEW PAYMENT</span></div>
   <div class="machine-body">
     <div class="intent-panel">
@@ -48,11 +48,11 @@ $('#app').innerHTML = `
       <div class="chamber-bottom"><span><i></i> <span id="chamber-note">THE ACTUAL ASSET PURCHASED BY THE AGENT</span></span><span>DRAG TO ORBIT <b>↔</b> SCROLL TO ZOOM</span></div>
     </div>
   </div>
-  <div class="machine-footer"><div class="status-result"><span class="result-code" id="http-code">200</span><div><strong id="result-title">REQUEST FULFILLED</strong><span id="result-note">One agent. One payment. One real asset.</span></div></div><div class="run-facts"><div><span>NETWORK</span><strong>HEDERA TESTNET</strong></div><div><span>GENERATION</span><strong id="duration">— S</strong></div><div><span>PROVIDER USAGE</span><strong id="credits">20 CREDITS</strong></div></div><a class="download" id="download" download>DOWNLOAD GLB <span>↓</span></a></div>
+  <div class="machine-footer"><div class="status-result"><div class="http-transition" id="http-transition" data-phase="fulfilled" aria-label="HTTP request status"><span class="http-start">402</span><span class="http-arrow" aria-hidden="true">→</span><span class="result-code" id="http-code">200</span></div><div><strong id="result-title">REQUEST FULFILLED</strong><span id="result-note">One agent. One payment. One real asset.</span></div></div><div class="run-facts"><div><span>NETWORK</span><strong>HEDERA TESTNET</strong></div><div><span>GENERATION</span><strong id="duration">— S</strong></div><div><span>PROVIDER USAGE</span><strong id="credits">20 CREDITS</strong></div></div><a class="download" id="download" download>DOWNLOAD GLB <span>↓</span></a></div>
 </section>
 <div class="evidence-strip"><span><i></i> REAL TRANSACTION. REAL GENERATION. REAL GLB.</span><button id="evidence-toggle" aria-expanded="false">INSPECT EXECUTION RECEIPT <span>+</span></button></div>
-<section class="evidence-detail" id="evidence-detail" hidden><div><span class="eyebrow">VERIFIABLE EXECUTION</span><h3>Nothing here is hypothetical.</h3><p id="final-answer"></p><small id="finalization-note"></small></div><dl><dt>TRANSACTION</dt><dd id="receipt-transaction"></dd><dt>TRIPO TASK</dt><dd id="receipt-task"></dd><dt>AGENT ARGUMENT</dt><dd id="receipt-prompt"></dd><dt>LOCAL ASSET</dt><dd id="receipt-asset"></dd></dl><a href="/demo/receipt" class="text-link">DOWNLOAD PUBLIC RECEIPT ↗</a></section>
-<section class="protocol" id="protocol"><div class="protocol-heading"><span class="eyebrow">THE PROTOCOL / 002</span><h2>One capability.<br><span>Any agent.</span></h2><p>Your agent brings the intent.<br>The machine handles the rest.</p></div><div class="protocol-content"><div class="architecture"><div class="arch-agent">${icon}<span>YOUR AGENT</span><small>INTENT + PAYMENT</small></div><span class="arch-arrow">→</span><div class="arch-mesh"><strong>MESH402</strong><span>PAID CAPABILITY</span></div><div class="arch-branches"><div><span>x402</span><b>HEDERA</b><small>SETTLE</small></div><div><span>generation</span><b>TRIPO</b><small>FABRICATE</small></div></div><span class="arch-arrow">→</span><div class="arch-glb"><span>↗</span><strong>.GLB</strong><small>CONSUME</small></div></div><div class="principles"><div><span>01</span><h3>No subscription.</h3><p>Pay per generation.</p></div><div><span>02</span><h3>No provider key.</h3><p>The agent needs no Tripo credential.</p></div><div><span>03</span><h3>Machine-native.</h3><p>Discover. Pay. Consume.</p></div></div><div class="code-example"><div><span class="mono">THE CAPABILITY</span><span>HTTP / x402 v2</span></div><pre><span class="code-green">POST</span> /api/generate-3d
+<section class="evidence-detail" id="evidence-detail" hidden><div><span class="eyebrow">VERIFIABLE EXECUTION</span><h3>Nothing here is hypothetical.</h3><p id="final-answer"></p><small id="finalization-note"></small></div><dl><dt>TRANSACTION</dt><dd id="receipt-transaction"></dd><dt>TRIPO TASK</dt><dd id="receipt-task"></dd><dt>ORIGINAL INTENT</dt><dd id="receipt-intent"></dd><dt>AGENT ARGUMENT</dt><dd id="receipt-prompt"></dd><dt>LOCAL ASSET</dt><dd id="receipt-asset"></dd></dl><a href="/demo/receipt" class="text-link">DOWNLOAD PUBLIC RECEIPT ↗</a></section>
+<section class="protocol" id="protocol"><div class="protocol-heading"><span class="eyebrow">THE PROTOCOL / 002</span><h2>One capability.<br><span>Any agent.</span></h2><p>Agents shouldn't subscribe to tools.<br>They should buy capabilities.</p></div><div class="protocol-content"><div class="architecture"><div class="arch-agent">${icon}<span>YOUR AGENT</span><small>INTENT + PAYMENT</small></div><span class="arch-arrow">→</span><div class="arch-mesh"><strong>MESH402</strong><span>PAID CAPABILITY</span></div><div class="arch-branches"><div><span>x402</span><b>HEDERA</b><small>SETTLE</small></div><div><span>generation</span><b>TRIPO</b><small>FABRICATE</small></div></div><span class="arch-arrow">→</span><div class="arch-glb"><span>↗</span><strong>.GLB</strong><small>CONSUME</small></div></div><div class="principles"><div><span>01</span><h3>No subscription.</h3><p>Pay per generation.</p></div><div><span>02</span><h3>No provider key.</h3><p>The agent needs no Tripo credential.</p></div><div><span>03</span><h3>Machine-native.</h3><p>Discover. Pay. Consume.</p></div></div><div class="code-example"><div><span class="mono">THE CAPABILITY</span><span>HTTP / x402 v2</span></div><pre><span class="code-green">POST</span> /api/generate-3d
 { "prompt": "low-poly robotic street food cart" }
 <span class="code-dim">402 → sign payment → retry →</span> <span class="code-green">200 + GLB</span></pre></div></div></section>
 <footer class="footer"><div class="footer-brand">${icon}<span>MESH402</span><small>INFRASTRUCTURE, NOT AN INTERFACE.</small></div><div class="stack"><span>POWERED BY</span><p>Nebius / Qwen <i>REASON</i> <b>·</b> Blocky402 <i>VERIFY</i> <b>·</b> Hedera <i>SETTLE</i> <b>·</b> Tripo <i>CREATE</i></p></div><span class="footer-end">BUILT FOR MACHINES.<br>UNDERSTOOD BY HUMANS.</span></footer>
@@ -72,7 +72,7 @@ const stateNames = ['AWAITING INTENT', 'CAPABILITY SELECTED', '402 / PAYMENT REQ
 function error(message: string) { $('#error').textContent = message; $('#error').hidden = false; }
 function applyEvidence(data: Evidence) {
   evidence = data;
-  $<HTMLTextAreaElement>('#intent').value = data.request;
+  $<HTMLTextAreaElement>('#intent').value = mode === 'replay' ? '“I need a robotic street food cart for my retro-futuristic browser game.”' : data.request;
   $('#intent').setAttribute('title', data.request);
   $('#payment-price').textContent = data.amount;
   $('#accounts').textContent = `${data.payer} → ${data.recipient}`;
@@ -87,6 +87,7 @@ function applyEvidence(data: Evidence) {
   $('#finalization-note').textContent = data.finalizationRecovered ? 'Final agent wording recovered in a separate, non-spending finalization. No payment or generation repeated.' : '';
   $('#receipt-transaction').textContent = data.transactionId;
   $('#receipt-task').textContent = data.taskId;
+  $('#receipt-intent').textContent = data.request;
   $('#receipt-prompt').textContent = data.prompt;
   $('#receipt-asset').textContent = `${data.taskId}.glb / ${data.bytes.toLocaleString()} bytes`;
 }
@@ -100,10 +101,11 @@ function renderStage(value: number) {
   $('#trace-count').textContent = `${String(value).padStart(2, '0')} / 05`;
   $('#state-label').textContent = stateNames[value];
   $('#machine-state').classList.toggle('working', value < 5);
+  $('#http-transition').dataset.phase = value === 5 ? 'fulfilled' : value >= 2 ? 'required' : 'awaiting';
   $('#http-code').textContent = value === 5 ? '200' : value >= 2 ? '402' : '—';
   $('#http-code').classList.toggle('waiting', value < 5);
   $('#result-title').textContent = value === 5 ? 'REQUEST FULFILLED' : value === 4 ? 'CAPABILITY EXECUTING' : value === 3 ? 'PAYMENT ACCEPTED' : value === 2 ? 'PAYMENT REQUIRED' : running ? 'AGENT AT WORK' : 'AWAITING REQUEST';
-  $('#result-note').textContent = value === 5 ? 'One agent. One payment. One real asset.' : value === 4 ? 'The paid capability is fabricating the asset.' : 'Intent → capability → payment → asset';
+  $('#result-note').textContent = value === 5 ? 'One agent. One payment. One real asset.' : value === 4 ? 'Payment unlocked generation. Awaiting delivery.' : value === 3 ? 'Payment settled. Capability unlocked.' : value === 2 ? 'Payment unlocks this capability.' : 'Intent → capability → payment → asset';
   $('#download').classList.toggle('unavailable', value !== 5);
   $('#download').setAttribute('aria-disabled', String(value !== 5));
   $('#download').tabIndex = value === 5 ? 0 : -1;
@@ -148,6 +150,8 @@ function switchMode(next: 'replay' | 'live') {
   if (running) return;
   mode = next;
   const live = mode === 'live';
+  $('#machine').classList.toggle('replay-view', !live);
+  if (live) $<HTMLTextAreaElement>('#intent').value = replayEvidence.request;
   $('#replay-mode').setAttribute('aria-pressed', String(!live)); $('#live-mode').setAttribute('aria-pressed', String(live));
   $<HTMLTextAreaElement>('#intent').readOnly = !live;
   $('#live-consent').hidden = !live;

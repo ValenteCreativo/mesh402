@@ -26,7 +26,7 @@ export function createChamber(host: HTMLElement, onLoad: (fraction: number) => v
   controls.minDistance = 4.6;
   controls.maxDistance = 12;
   controls.maxPolarAngle = Math.PI / 2.05;
-  const reset = () => { camera.position.set(5.6, 3.4, 6.3); controls.target.set(0, 1.15, 0); controls.update(); };
+  const reset = () => { camera.position.set(5.6, 3.4, 6.3); controls.target.set(0, 1.6, 0); controls.update(); };
   reset();
   const pmrem = new THREE.PMREMGenerator(renderer);
   const room = new RoomEnvironment();
@@ -92,7 +92,10 @@ export function createChamber(host: HTMLElement, onLoad: (fraction: number) => v
   }
   const resize = new ResizeObserver(() => {
     const { width, height } = host.getBoundingClientRect();
-    renderer.setSize(width, height); camera.aspect = width / height; camera.updateProjectionMatrix();
+    renderer.setSize(width, height); camera.aspect = width / height;
+    // About 23% larger desktop framing; retain breathing room in narrow chambers.
+    camera.fov = camera.aspect >= 1.2 ? 28 : 34;
+    camera.updateProjectionMatrix();
   }); resize.observe(host);
   let previous = 0;
   renderer.setAnimationLoop(time => {

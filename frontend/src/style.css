@@ -8,3 +8,17 @@
  .topbar{height:43px}.hero-heading{padding:15px 0 16px}.hero-heading .eyebrow{font-size:8px}h1{font-size:65px}.hero-description p{font-size:21px;margin-bottom:8px}.hero-description .mono{font-size:8px}.machine-bar{height:32px}.machine-body{min-height:432px}.intent-panel{padding:14px 22px 8px}.request-label{margin-top:9px;font-size:10px}textarea{height:58px;font-size:14px}.run-button{height:33px;margin-top:9px;font-size:9px}.request-footer{font-size:7px}.run-subline{font-size:6px;margin-top:6px}.trace-panel{padding:5px 22px 10px}.section-label{font-size:8px}.trace li{padding-top:5px;padding-bottom:5px}.step-heading{font-size:11px}.trace .payment-step{padding-top:4px;padding-bottom:4px}.http-payment strong{font-size:32px}.trace a{margin-top:3px}.chamber{min-height:355px}.chamber-top{height:38px}.chamber-bottom{height:30px}.machine-footer{min-height:60px;padding-top:9px;padding-bottom:9px}.evidence-strip{padding-top:12px;padding-bottom:12px}.status-result{min-width:32%}
 }
 @media(min-width:761px) and (max-height:800px){.hero-heading{padding-top:12px;padding-bottom:13px}.intent-panel{padding-top:12px}.request-label{margin-top:6px}.run-button{margin-top:7px}.trace li{padding-top:4px;padding-bottom:4px}}
+
+/* Second pass: one request-status anchor, with the original 402 retained on fulfillment. */
+.http-transition{display:flex;align-items:center;gap:10px;min-width:116px}
+.status-result .http-transition .http-start{font-family:'Barlow Condensed',sans-serif;font-size:27px;color:var(--muted);line-height:1}
+.status-result .http-transition .http-arrow{font-size:18px;color:var(--green)}
+.http-transition[data-phase="required"] .http-start,.http-transition[data-phase="awaiting"] .http-start,.http-transition[data-phase="required"] .http-arrow,.http-transition[data-phase="awaiting"] .http-arrow{display:none}
+.http-transition[data-phase="required"] .result-code{background:var(--ink);color:var(--paper);padding:3px 9px}
+.http-transition[data-phase="fulfilled"] .result-code{background:var(--acid);padding:3px 9px}
+.replay-view .request-label,.replay-view .request-footer,.replay-view .run-subline{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.replay-view textarea{margin-top:17px;height:66px}
+.replay-view .run-button{margin-top:10px}
+@media(max-width:760px){.http-transition{min-width:109px;gap:7px}.machine-footer .status-result{flex-basis:100%}.replay-view textarea{height:72px}}
+.status-result .http-transition .result-code{font-family:'Barlow Condensed',sans-serif;font-size:38px;line-height:1;font-weight:600}
+.status-result .http-transition{flex-direction:row}
