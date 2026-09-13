@@ -8,6 +8,8 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
+    "test:agent": "node --env-file=.env.local --import tsx scripts/test-agent.ts",
+    "test:agent:guards": "node --import tsx --test src/agent/mesh402-tool.test.ts",
     "test:e2e": "node --env-file=.env.local --import tsx scripts/test-x402.ts",
     "test:x402": "node --env-file=.env.local --import tsx scripts/test-x402.ts",
     "test:tripo": "node --env-file=.env.local --import tsx scripts/test-tripo.ts"

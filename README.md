@@ -67,3 +67,41 @@ References: [Blocky402 API](https://blocky402.com/docs/api-reference/),
 [Hedera signing example](https://blocky402.com/docs/examples/), and
 [official x402 v2 HTTP headers](https://docs.x402.org/core-concepts/http-402).
 The installed `@x402/hedera` SDK constructs and signs the native Hedera transfer.
+
+## Minimal Nebius agent consumer
+
+The separate agent layer leaves the `mvp-e2e` server, Tripo files, and golden test
+unchanged. It uses native fetch and the existing x402 SDK; no new dependencies.
+Configure `NEBIUS_API_KEY`, `NEBIUS_BASE_URL`, and `NEBIUS_MODEL` as shown in
+`.env.example`. The configured model is used directly, without discovery or fallback.
+
+```sh
+npm run typecheck
+npm run test:agent:guards
+npm run test:agent -- --dry-run "I need a newly generated low-poly sci-fi cargo drone GLB for my game."
+```
+
+Dry run is the default. It sends a real Nebius Chat Completions request with
+`tool_choice: "auto"`, validates the selected tool, and sends back an explicitly
+nonexecuted dry-run result for a final answer. Nebius inference may consume tokens;
+no Mesh402 endpoint, signing, payment, or Tripo request runs in dry-run mode.
+
+The only tool is `generate_3d_asset({ prompt: string })`. If the model answers
+without a tool, no payment is made. Multiple calls in one response are rejected
+before execution. A single-use closure locks before its first await and remains
+locked after any error. The final model request has no tools and its response is
+never dispatched again. No automatic retries exist.
+
+After explicit human authorization, `--live` enables at most one paid generation.
+It starts the existing local endpoint only after the model selects the tool, then
+follows the golden client's HTTP sequence. Before parsing the private key or
+creating a signer, the tool requires exactly `hedera:testnet`, `100000` tinybars,
+and `HEDERA_PAY_TO_ACCOUNT_ID`. It also checks exact/HBAR, all discovered server
+requirements including fee payer, and the serialized transfer before submission.
+It returns verified asset metadata and the shared local GLB path to Nebius.
+
+The CLI prints the final answer and saves `generated/mesh402-agent-receipt.json`
+with an explicit live/dry-run mode, decision, invocation count, result, and final
+answer (or error). It does not overwrite the golden E2E receipt. Keys and signed
+payment payloads are never included in model messages. No live agent run has been
+authorized as part of implementation/testing.
