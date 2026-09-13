@@ -13,6 +13,20 @@ has NOT been executed. The server defaults to disabled until explicitly enabled.
 
 ## Contract
 
+Gateway API Base URL: `https://mesh402.onrender.com`
+
+Public OpenAPI 3.1 spec: `https://mesh402.onrender.com/openapi.json`
+
+The spec documents only `POST /api/v1/generate`. It is served from
+`frontend/public/openapi.json` through the existing Vite build and static server;
+Render must deploy the commit containing it before gateway analysis. An OpenAPI
+import does not implement x402 signing: the caller still needs its own Hedera
+wallet and must handle the 402 challenge.
+
+Validation: `npm run test:public-api` checks the spec against mocked route responses
+(no network settlement or generation). Full OpenAPI lint:
+`npx --yes @redocly/cli@2.21.1 lint frontend/public/openapi.json --extends=minimal`.
+
 `POST https://mesh402.onrender.com/api/v1/generate`
 
 ```json

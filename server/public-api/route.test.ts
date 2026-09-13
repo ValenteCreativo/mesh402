@@ -12,6 +12,54 @@ const origin='https://mesh402.example';
 const accepted={scheme:'exact',network:'hedera:testnet',amount:'100000',asset:'0.0.0',payTo:'0.0.456',maxTimeoutSeconds:120,extra:{feePayer:'0.0.789'}} as const;
 const inspected={transactionId:'0.0.789@1234567890.000000001',transactionIdAccountId:'0.0.789',hasNonTransferOperations:false,tokenTransfers:{},hbarTransfers:[{accountId:'0.0.123',amount:'-100000'},{accountId:'0.0.456',amount:'100000'}]};
 const payment=()=>({x402Version:2,resource:{url:origin+'/api/v1/generate'},accepted:structuredClone(accepted),payload:{transaction:'mock-caller-signed-transaction'}});
+const spec = JSON.parse(await readFile(new URL('../../frontend/public/openapi.json', import.meta.url), 'utf8'));
+const operation = spec.paths['/api/v1/generate'].post;
+// Contract checks for this document's schema subset; full OpenAPI lint is separate.
+function matchesSchema(value: any, schema: any): void {
+  if (schema.$ref) return matchesSchema(value, spec.components.schemas[schema.$ref.split('/').at(-1)]);
+  if (schema.oneOf) {
+    assert.equal(schema.oneOf.filter((candidate: any) => { try { matchesSchema(value, candidate); return true; } catch { return false; } }).length, 1);
+    return;
+  }
+  const type = value === null ? 'null' : Array.isArray(value) ? 'array' : typeof value;
+  const types = [schema.type].flat();
+  assert.ok(types.includes(type) || (types.includes('integer') && Number.isInteger(value)), `Unexpected ${type}`);
+  if (schema.enum) assert.ok(schema.enum.some((item: any) => Object.is(item, value)));
+  if (type === 'object') {
+    for (const key of schema.required ?? []) assert.ok(Object.hasOwn(value, key), `Missing ${key}`);
+    if (schema.additionalProperties === false) assert.ok(Object.keys(value).every(key => key in schema.properties), 'Undocumented response field');
+    for (const [key, item] of Object.entries(value)) if (schema.properties[key]) matchesSchema(item, schema.properties[key]);
+  }
+  if (type === 'array') {
+    if (schema.minItems !== undefined) assert.ok(value.length >= schema.minItems);
+    if (schema.maxItems !== undefined) assert.ok(value.length <= schema.maxItems);
+    value.forEach((item: any) => matchesSchema(item, schema.items));
+  }
+  if (type === 'string') {
+    if (schema.pattern) assert.match(value, new RegExp(schema.pattern));
+    if (schema.minLength !== undefined) assert.ok(value.length >= schema.minLength);
+    if (schema.maxLength !== undefined) assert.ok(value.length <= schema.maxLength);
+    if (schema.format === 'uri') assert.ok(new URL(value).protocol);
+  }
+  if (type === 'number' && schema.minimum !== undefined) assert.ok(value >= schema.minimum);
+}
+test('public OpenAPI documents only the existing caller-paid operation and prompt contract', () => {
+  assert.equal(spec.openapi, '3.1.0');
+  assert.ok(spec.info.title && spec.info.version);
+  assert.deepEqual(spec.servers, [{url: 'https://mesh402.onrender.com'}]);
+  assert.deepEqual(Object.keys(spec.paths), ['/api/v1/generate']);
+  assert.deepEqual(Object.keys(spec.paths['/api/v1/generate']), ['post']);
+  assert.equal(operation.parameters[0].name, 'PAYMENT-SIGNATURE');
+  assert.equal(operation.parameters[0].required, false);
+  assert.deepEqual(operation.security, []);
+  assert.ok(operation.responses['402'].headers['PAYMENT-REQUIRED']);
+  assert.ok(operation.responses['200'].headers['PAYMENT-RESPONSE']);
+  const request = operation.requestBody.content['application/json'].schema;
+  matchesSchema({prompt: 'robot'}, request);
+  for (const invalid of [{}, {prompt: ''}, {prompt: '  '}, {prompt: 42}, {prompt: 'x'.repeat(2001)}, {prompt: 'robot', extra: true}]) {
+    assert.throws(() => matchesSchema(invalid, request));
+  }
+});
 async function fixture(overrides: Partial<PublicDependencies>={}, configOverrides: Partial<PublicConfig>={}) {
   const dataDir=await mkdtemp(resolve(tmpdir(),'mesh402-public-'));
   const calls={discover:0,verify:0,settle:0,generate:0,persist:0};
@@ -27,7 +75,13 @@ async function fixture(overrides: Partial<PublicDependencies>={}, configOverride
   const servers:ReturnType<typeof createServer>[]=[];
   async function start(){const route=await createPublicApi(config,deps);const server=createServer(async(req,res)=>{if(!await route(req,res)){res.writeHead(404);res.end();}});server.listen(0,'127.0.0.1');await once(server,'listening');servers.push(server);return `http://127.0.0.1:${(server.address() as any).port}`;}
   const base=await start();
-  const post=(value?:any,baseUrl=base)=>fetch(baseUrl+'/api/v1/generate',{method:'POST',headers:{'Content-Type':'application/json',...(value===undefined?{}:{'PAYMENT-SIGNATURE':typeof value==='string'?value:encode(value)})},body:JSON.stringify({prompt:'robot'})});
+  const post=async(value?:any,baseUrl=base)=>{
+    const response = await fetch(baseUrl+'/api/v1/generate',{method:'POST',headers:{'Content-Type':'application/json',...(value===undefined?{}:{'PAYMENT-SIGNATURE':typeof value==='string'?value:encode(value)})},body:JSON.stringify({prompt:'robot'})});
+    const documented = operation.responses[String(response.status)];
+    assert.ok(documented, `Undocumented HTTP ${response.status}`);
+    matchesSchema(await response.clone().json(), documented.content['application/json'].schema);
+    return response;
+  };
   return {dataDir,calls,post,base,start,async close(){for(const server of servers){server.closeAllConnections();await new Promise<void>(r=>server.close(()=>r()));}await rm(dataDir,{recursive:true,force:true});}};
 }
 
