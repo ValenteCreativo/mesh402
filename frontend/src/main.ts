@@ -11,7 +11,7 @@ type Evidence = {
 const $ = <T extends HTMLElement = HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
 const icon = `<svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M4 24V8l12 8L28 8v16M4 8l12 16L28 8" stroke="currentColor" stroke-width="1.8"/></svg>`;
 $('#app').innerHTML = `
-<header class="topbar"><a class="brand" href="#" aria-label="Mesh402 home">${icon}<span>MESH402</span></a><nav aria-label="Main navigation"><a href="#machine" class="nav-active">THE MACHINE</a><a href="#protocol">THE PROTOCOL ↗</a></nav><span class="system-status"><i></i> SYSTEM OPERATIONAL</span></header>
+<header class="topbar"><a class="brand" href="#" aria-label="Mesh402 home">${icon}<span>MESH402</span></a><nav aria-label="Main navigation"><a href="#machine" class="nav-active">THE MACHINE</a><a href="#protocol">THE PROTOCOL ↗</a><a href="#build">BUILD ↗</a></nav><span class="system-status"><i></i> SYSTEM OPERATIONAL</span></header>
 <main>
 <section class="hero-heading"><div><div class="eyebrow">AUTONOMOUS FABRICATION PROTOCOL <span>/ 001</span></div><h1>MESH<span>402</span></h1></div><div class="hero-description"><p>3D infrastructure<br>for autonomous agents.</p><span class="mono">INTENT IN. <b>ASSET OUT.</b></span></div></section>
 <section class="machine replay-view" id="machine" aria-label="Mesh402 execution machine">
@@ -56,6 +56,20 @@ $('#app').innerHTML = `
 <section class="protocol" id="protocol"><div class="protocol-heading"><span class="eyebrow">THE PROTOCOL / 002</span><h2>One capability.<br><span>Any agent.</span></h2><p>Agents shouldn't subscribe to tools.<br>They should buy capabilities.</p></div><div class="protocol-content"><div class="architecture"><div class="arch-agent">${icon}<span>YOUR AGENT</span><small>INTENT + PAYMENT</small></div><span class="arch-arrow">→</span><div class="arch-mesh"><strong>MESH402</strong><span>PAID CAPABILITY</span></div><div class="arch-branches"><div><span>x402</span><b>HEDERA</b><small>SETTLE</small></div><div><span>generation</span><b>TRIPO</b><small>FABRICATE</small></div></div><span class="arch-arrow">→</span><div class="arch-glb"><span>↗</span><strong>.GLB</strong><small>CONSUME</small></div></div><div class="principles"><div><span>01</span><h3>No account.</h3><p>Bring your own agent.</p></div><div><span>02</span><h3>No subscription.</h3><p>Bring your own wallet.</p></div><div><span>03</span><h3>No provider API key.</h3><p>Discover. Pay. Consume.</p></div></div><div class="code-example"><div><span class="mono">BRING YOUR OWN AGENT. BRING YOUR OWN WALLET.</span><span>HTTP / x402 v2</span></div><pre><span class="code-green">POST</span> https://mesh402.onrender.com/api/v1/generate
 { "prompt": "low-poly robotic street food cart" }
 <span class="code-dim">402 → sign payment → retry →</span> <span class="code-green">200 + GLB</span></pre></div></div></section>
+<section class="build-section" id="build" aria-labelledby="build-title">
+  <div class="build-heading"><span class="eyebrow">DEVELOPER ACCESS / 003</span><h2 id="build-title">BUILD WITH<br><span>MESH402</span></h2><p>Give your agent a 3D capability.<br>Keep the wallet on your side.</p><a class="text-link" href="https://github.com/ValenteCreativo/mesh402#public-api-quickstart" target="_blank" rel="noopener noreferrer">READ THE QUICKSTART ↗</a></div>
+  <div class="build-content">
+    <div class="build-endpoint"><span>POST</span><code>https://mesh402.onrender.com/api/v1/generate</code></div>
+    <p class="build-flow">Request <span>→</span> <b>402</b> <span>→</span> caller signs with Hedera wallet <span>→</span> retry <span>→</span> <b>GLB</b></p>
+    <div class="code-example"><div><span>FROM THE CLONED REPOSITORY</span><span>NODE 22 / HEDERA TESTNET</span></div><pre><span class="code-dim"># Install dependencies; configure .env.caller.local</span>
+npm ci
+<span class="code-dim"># One paid request: 0.001 HBAR + a new generation</span>
+npm run example:external-agent -- "low-poly lunar repair drone"</pre></div>
+    <p class="build-note">The client handles the 402 challenge, signs locally, and returns stable asset and receipt URLs. Allow several minutes. Never automatically retry a paid request.</p>
+    <div class="build-access"><span>No Mesh402 account.</span><span>No provider API key.</span><span>Caller wallet stays local.</span></div>
+    <div class="build-links"><a href="/openapi.json" target="_blank" rel="noopener noreferrer">OPENAPI SPEC ↗</a><a href="https://github.com/ValenteCreativo/mesh402/blob/main/examples/external-agent.ts" target="_blank" rel="noopener noreferrer">CALLER EXAMPLE ↗</a></div>
+  </div>
+</section>
 <footer class="footer"><div class="footer-brand">${icon}<span>MESH402</span><small>INFRASTRUCTURE, NOT AN INTERFACE.</small></div><div class="stack"><span>POWERED BY</span><p>Nebius / Qwen <i>REASON</i> <b>·</b> Blocky402 <i>VERIFY</i> <b>·</b> Hedera <i>SETTLE</i> <b>·</b> Tripo <i>CREATE</i></p></div><span class="footer-end">BUILT FOR MACHINES.<br>UNDERSTOOD BY HUMANS.</span></footer>
 </main><div class="error-banner" id="error" role="alert" hidden></div>`;
 

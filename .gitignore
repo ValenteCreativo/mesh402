@@ -3,3 +3,21 @@ node_modules/
 !.env.example
 generated/
 dist-visual/
+
+# Local workstation, editor and agent runtime state
+.DS_Store
+._*
+Thumbs.db
+.codex/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.log
+*.pid
+*.pid.lock
+*.tsbuildinfo
+coverage/
+.cache/
+.vite/

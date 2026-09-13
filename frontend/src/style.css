@@ -22,3 +22,21 @@
 @media(max-width:760px){.http-transition{min-width:109px;gap:7px}.machine-footer .status-result{flex-basis:100%}.replay-view textarea{height:72px}}
 .status-result .http-transition .result-code{font-family:'Barlow Condensed',sans-serif;font-size:38px;line-height:1;font-weight:600}
 .status-result .http-transition{flex-direction:row}
+
+/* Developer access: the same paper, rules and technical typography. */
+.build-section{display:grid;grid-template-columns:32% 68%;border-top:1px solid var(--line);padding:48px 0 52px;gap:0}
+.build-heading h2{font-family:'Barlow Condensed',sans-serif;font-size:46px;font-weight:500;line-height:1;letter-spacing:-.025em;margin:17px 0}
+.build-heading h2 span{color:var(--muted)}
+.build-heading p,.build-note{font-size:12px;line-height:1.7;color:var(--muted)}
+.build-heading .text-link{display:inline-block;margin-top:12px;font-family:var(--mono);border-bottom:1px solid var(--line);padding-bottom:5px}
+.build-content{padding-left:10px;min-width:0}
+.build-endpoint{display:flex;gap:14px;align-items:baseline;border-bottom:1px solid var(--line);padding:0 0 15px;font:11px/1.7 var(--mono)}
+.build-endpoint>span{background:var(--acid);color:var(--green);padding:3px 7px}
+.build-endpoint code{font:inherit;overflow-wrap:anywhere}
+.build-flow{font:10px/2 var(--mono);margin:17px 0;color:var(--ink)}
+.build-flow span{color:var(--muted);margin:0 5px}.build-flow b{font-weight:500;color:var(--green)}
+.build-content .code-example{margin-top:0}.build-note{font-size:10px;margin:14px 0}
+.build-access{display:flex;flex-wrap:wrap;gap:8px 20px;font:9px/1.6 var(--mono);padding:12px 0;border-top:1px solid var(--line);color:var(--green)}
+.build-links{display:flex;gap:24px;margin-top:10px;font:8px/1.6 var(--mono)}
+.build-links a:hover,.build-heading .text-link:hover{color:var(--green);text-decoration:underline}
+@media(max-width:760px){.build-section{grid-template-columns:1fr;padding:35px 0;gap:28px}.build-content{padding:0}.build-heading h2{font-size:40px}.build-endpoint{font-size:10px;gap:8px}.build-content .code-example>div{flex-wrap:wrap;gap:7px}.build-flow{font-size:9px}.build-access{font-size:8px;gap:8px 16px}.topbar nav{gap:10px;font-size:7px}}
