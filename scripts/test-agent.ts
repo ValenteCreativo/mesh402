@@ -2,6 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { assetTool, createMesh402Tool, redact, selectToolCall } from "../src/agent/mesh402-tool.js";
 import { discoverRequirements, startPaymentServer } from "../src/x402/server.js";
+import { AGENT_SYSTEM_PROMPT, finalizeResponse, assertFinalResponse } from "../src/agent/finalize.js";
 
 function env(name: string) {
   const value = process.env[name]?.trim();
@@ -21,7 +22,7 @@ async function main() {
   const key = env("NEBIUS_API_KEY");
   if (new URL(baseUrl).protocol !== "https:") throw new Error("NEBIUS_BASE_URL must use HTTPS");
   const messages: Record<string, unknown>[] = [
-    { role: "system", content: "You consume Mesh402, agent-native 3D infrastructure. Decide whether the user's request needs an actual newly generated 3D asset. If yes, you may call generate_3d_asset once, costing 0.001 HBAR on Hedera testnet. If not, answer without tools or spending. Never call more than one tool. Use the tool result as evidence; never invent successful payment, generation, URLs, or local paths. If a result says dryRun, clearly state that nothing was purchased or generated." },
+    { role: "system", content: AGENT_SYSTEM_PROMPT },
     { role: "user", content: request },
   ];
   const receipt: Record<string, unknown> = { mode: live ? "live" : "dry-run", model, request,
@@ -68,8 +69,12 @@ async function main() {
       }
       receipt.toolResult = result;
       messages.push({ role: "tool", tool_call_id: selection.call.id, content: redact(JSON.stringify(result)) });
-      final = await completion(false); // No tools offered; no execution loop or retry exists.
-      if (final.tool_calls?.length) throw new Error("Nebius requested another tool after the limit; not executed");
+      receipt.messages = messages;
+      const finalized = await finalizeResponse(messages);
+      receipt.finalization = finalized;
+      console.log("finalizationMetadata:", JSON.stringify({ finishReason: finalized.finishReason, truncated: finalized.truncated }));
+      assertFinalResponse(finalized); // Failure preserves evidence for finalization only, never another paid tool.
+      final = finalized.message;
     }
     if (typeof final.content !== "string" || !final.content.trim()) throw new Error("Nebius returned no final answer");
     receipt.finalAnswer = final.content;

@@ -105,3 +105,21 @@ with an explicit live/dry-run mode, decision, invocation count, result, and fina
 answer (or error). It does not overwrite the golden E2E receipt. Keys and signed
 payment payloads are never included in model messages. No live agent run has been
 authorized as part of implementation/testing.
+
+### Finalize an already successful paid tool result
+
+```sh
+npm run finalize:agent
+```
+
+This command reads the successful tool result from `generated/mesh402-agent-receipt.json`
+and makes one Nebius-only request, with no tool declarations or execution path.
+It preserves payment/generation evidence and invocation counts. It records the
+finish reason, truncation flag, usage, response ID, and final answer in the receipt.
+Older receipts without conversation messages are reconstructed from the original
+request, selected tool arguments, and result, with a synthetic matching call ID.
+Future agent runs preserve the actual conversation for finalization.
+
+Final answers use 1024 tokens and a concise-summary instruction. A truncated
+answer remains an explicit finalization failure; it never triggers a payment,
+generation, or automatic retry. Use finalization only to recover the wording.
