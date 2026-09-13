@@ -1,0 +1,24 @@
+{
+  "name": "agent-native-3d-spike",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.6"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "node --env-file=.env.local --import tsx scripts/test-x402.ts",
+    "test:x402": "node --env-file=.env.local --import tsx scripts/test-x402.ts",
+    "test:tripo": "node --env-file=.env.local --import tsx scripts/test-tripo.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@x402/core": "2.25.0",
+    "@x402/hedera": "2.25.0"
+  }
+}
