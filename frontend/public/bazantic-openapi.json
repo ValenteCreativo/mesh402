@@ -1,0 +1,362 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Mesh402 Bazantic upstream",
+    "version": "1.0.0",
+    "description": "On-demand 3D asset generation capability for AI agents behind the Bazantic paid gateway. The gateway is responsible for charging callers and privately authenticating upstream requests. Mesh402 does not issue a second x402 charge on this route."
+  },
+  "servers": [
+    {
+      "url": "https://mesh402.onrender.com"
+    }
+  ],
+  "paths": {
+    "/api/bazantic/generate": {
+      "post": {
+        "operationId": "generateBazantic3DAsset",
+        "summary": "Generate and persist a GLB after gateway payment",
+        "description": "Trusted server-to-server upstream only. The shared secret authenticates the gateway; it is not an independent payment receipt. Disable gateway automatic retries for this operation. Each successful invocation creates one new asset.",
+        "security": [
+          {
+            "BazanticUpstreamSecret": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "JSON body limited to 16384 bytes. Prompt must contain non-whitespace text and be at most 2000 JavaScript UTF-16 code units.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Generation succeeded and GLB persisted. Wait for completion; this may take several minutes. No Mesh402 payment or settlement occurs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneratedAsset"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "invalid_prompt, invalid_json.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "code"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "invalid_prompt",
+                            "invalid_json"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "code"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "unauthorized"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "generation_in_progress, reconciliation_required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "code"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "generation_in_progress",
+                            "reconciliation_required"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "body_too_large.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "code"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "body_too_large"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "json_required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "code"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "json_required"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Provider or persistence failure. Generation may have occurred. Stop and reconcile; never automatically repeat this request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "error",
+                    "taskId",
+                    "retryable"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "code"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "execution_requires_reconciliation"
+                          ]
+                        }
+                      }
+                    },
+                    "taskId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "retryable": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "bazantic_not_configured, generation_not_configured, bazantic_unavailable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "code"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "bazantic_not_configured",
+                            "generation_not_configured",
+                            "bazantic_unavailable"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BazanticUpstreamSecret": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Bazantic-Upstream-Secret",
+        "description": "Private server-to-server credential injected by the paid gateway. Never send it to end users or browser code."
+      }
+    },
+    "schemas": {
+      "GenerateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "prompt"
+        ],
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000,
+            "pattern": "\\S",
+            "description": "Description of the requested 3D asset. Leading and trailing whitespace is trimmed."
+          }
+        }
+      },
+      "GeneratedAsset": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "taskId",
+          "assetUrl",
+          "receiptUrl",
+          "creditsConsumed",
+          "glbBytes",
+          "prompt"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ]
+          },
+          "taskId": {
+            "type": "string",
+            "pattern": "^[a-f0-9-]{36}$"
+          },
+          "assetUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Stable public URL for the persisted GLB."
+          },
+          "receiptUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Public sanitized receipt URL for this generation."
+          },
+          "creditsConsumed": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "glbBytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "prompt": {
+            "type": "string",
+            "description": "The trimmed generation prompt."
+          }
+        }
+      }
+    }
+  }
+}

@@ -4,6 +4,7 @@ import { stat } from 'node:fs/promises';
 import { resolve, extname, sep } from 'node:path';
 import { createBridge, root } from './bridge.js';
 import { createPublicApi } from './public-api/route.js';
+import { createBazanticApi } from './bazantic/route.js';
 const port = Number(process.env.PORT ?? 4020);
 const origin = process.env.PUBLIC_ORIGIN ?? (process.env.NODE_ENV === 'production' ? '' : `http://127.0.0.1:${port}`);
 if (!origin || new URL(origin).origin !== origin) throw new Error('PUBLIC_ORIGIN must be the exact public origin');
@@ -16,6 +17,8 @@ const publicApi = await createPublicApi({
   maxConcurrent: Number(process.env.PUBLIC_API_MAX_CONCURRENT ?? 1),
 });
 const directory = resolve(root, 'dist-visual');
+const bazanticApi = await createBazanticApi({ origin, dataDir: resolve(root, 'generated'),
+  secret: process.env.BAZANTIC_UPSTREAM_SECRET ?? '', providerReady: !!process.env.TRIPO_API_KEY });
 const types: Record<string, string> = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.glb': 'model/gltf-binary', '.json': 'application/json', '.ttf': 'font/ttf', '.txt': 'text/plain' };
 const server = createServer(async (req, res) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -25,6 +28,7 @@ const server = createServer(async (req, res) => {
     const path = decodeURIComponent(new URL(req.url ?? '/', 'http://local').pathname);
     if (path === '/health' && req.method === 'GET') { res.setHeader('Content-Type', 'application/json'); res.end('{"status":"ok"}'); return; }
     if (await publicApi(req, res)) return;
+    if (await bazanticApi(req, res)) return;
     if (await bridge(req, res)) return;
     // Unknown API routes remain separate from operator authorization and static files.
     if (!['GET', 'HEAD'].includes(req.method ?? '') || path.startsWith('/api/') || path.split('/').some(p => p.startsWith('.'))) { res.writeHead(404); res.end(); return; }

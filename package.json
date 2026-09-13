@@ -21,6 +21,7 @@
     "start": "node --env-file-if-exists=.env.local --import tsx server/start.ts",
     "test:wrapper": "node --import tsx --test server/*.test.ts",
     "test:public-api": "node --import tsx --test server/public-api/*.test.ts",
+    "test:bazantic": "node --import tsx --test server/bazantic/*.test.ts",
     "example:external-agent": "node --env-file-if-exists=.env.caller.local --import tsx examples/external-agent.ts"
   },
   "devDependencies": {
