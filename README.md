@@ -170,3 +170,17 @@ asset and final Nebius response in the chamber/receipt inspector.
 
 The original street-food-cart replay snapshot remains unchanged. Type-check,
 production build, and browser inspection passed; no browser errors were observed.
+
+## External agents: caller-paid API
+
+`POST https://mesh402.onrender.com/api/v1/generate`
+
+Bring your own agent. Bring your own wallet. No account, subscription, or provider
+API key. The external caller signs x402 requirements with its own Hedera testnet
+wallet. The public server verifies/settles via Blocky402, calls the existing Tripo
+adapter, and returns stable GLB/receipt URLs. Operator `/demo/live` remains separate.
+
+Disabled by default; only mocked/non-spending public-API validation has run.
+See [public API contract, quota and example](docs/PUBLIC-API.md) before enabling it.
+`npm run test:public-api` is non-spending. `npm run example:external-agent` is a real
+paid client and requires separate explicit authorization.

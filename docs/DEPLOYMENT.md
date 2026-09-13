@@ -14,13 +14,12 @@ Public `/health`, replay evidence, the optimized GLB, registered delivered GLBs,
 and sanitized task receipts remain unauthenticated. Unregistered asset IDs return
 404. Raw `generated/` content is never a static directory.
 
-A future **caller-funded** `POST /api/generate-3d` belongs to a separate route
-handler with x402 requirement / payment verification / settlement authorization.
-It must use the external caller's signed payment, never the operator payer or
-operator session. Today `/api/*` is deliberately unimplemented (404), and the
-operator middleware does not run there. The internal golden payment service
-remains loopback-only inside the existing CLI. Do not expose that ephemeral server
-or reuse the operator CLI as the future public API handler.
+The independent caller-funded `POST /api/v1/generate` now uses its own x402
+payment boundary. It does not require an operator session or use the operator
+payer. It is disabled by default and has a persistent quota. See
+[PUBLIC-API.md](PUBLIC-API.md) for contract, caller signing, configuration and the
+separately authorized real-test sequence. The golden payment service remains
+loopback-only inside the operator CLI.
 
 ## Runtime
 

@@ -3,10 +3,18 @@ import { createReadStream } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import { resolve, extname, sep } from 'node:path';
 import { createBridge, root } from './bridge.js';
+import { createPublicApi } from './public-api/route.js';
 const port = Number(process.env.PORT ?? 4020);
 const origin = process.env.PUBLIC_ORIGIN ?? (process.env.NODE_ENV === 'production' ? '' : `http://127.0.0.1:${port}`);
 if (!origin || new URL(origin).origin !== origin) throw new Error('PUBLIC_ORIGIN must be the exact public origin');
 const bridge = await createBridge({ origin });
+const publicApi = await createPublicApi({
+  enabled: process.env.PUBLIC_API_ENABLED === 'true', origin,
+  recipient: process.env.HEDERA_PAY_TO_ACCOUNT_ID ?? '', dataDir: resolve(root, 'generated'),
+  providerReady: !!process.env.TRIPO_API_KEY,
+  maxGenerations: Number(process.env.PUBLIC_API_MAX_GENERATIONS ?? 5),
+  maxConcurrent: Number(process.env.PUBLIC_API_MAX_CONCURRENT ?? 1),
+});
 const directory = resolve(root, 'dist-visual');
 const types: Record<string, string> = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.glb': 'model/gltf-binary', '.json': 'application/json', '.ttf': 'font/ttf', '.txt': 'text/plain' };
 const server = createServer(async (req, res) => {
@@ -16,8 +24,9 @@ const server = createServer(async (req, res) => {
   try {
     const path = decodeURIComponent(new URL(req.url ?? '/', 'http://local').pathname);
     if (path === '/health' && req.method === 'GET') { res.setHeader('Content-Type', 'application/json'); res.end('{"status":"ok"}'); return; }
+    if (await publicApi(req, res)) return;
     if (await bridge(req, res)) return;
-    // /api is reserved for a future caller-funded x402 service. No operator auth middleware here.
+    // Unknown API routes remain separate from operator authorization and static files.
     if (!['GET', 'HEAD'].includes(req.method ?? '') || path.startsWith('/api/') || path.split('/').some(p => p.startsWith('.'))) { res.writeHead(404); res.end(); return; }
     const file = resolve(directory, '.' + (path === '/' ? '/index.html' : path === '/operator' ? '/operator.html' : path));
     if (!file.startsWith(directory + sep) || !types[extname(file)]) { res.writeHead(404); res.end(); return; }
