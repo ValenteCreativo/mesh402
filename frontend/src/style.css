@@ -40,3 +40,10 @@
 .build-links{display:flex;gap:24px;margin-top:10px;font:8px/1.6 var(--mono)}
 .build-links a:hover,.build-heading .text-link:hover{color:var(--green);text-decoration:underline}
 @media(max-width:760px){.build-section{grid-template-columns:1fr;padding:35px 0;gap:28px}.build-content{padding:0}.build-heading h2{font-size:40px}.build-endpoint{font-size:10px;gap:8px}.build-content .code-example>div{flex-wrap:wrap;gap:7px}.build-flow{font-size:9px}.build-access{font-size:8px;gap:8px 16px}.topbar nav{gap:10px;font-size:7px}}
+
+/* Studio signature stays visible at the footer's bottom right. */
+.footer .footer-credit{display:flex;flex-direction:column;align-items:flex-end;gap:10px;margin-left:auto}
+.footer-credit a{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;letter-spacing:-.02em;color:var(--ink);border-bottom:1px solid var(--line);padding-bottom:3px}
+.footer-credit a:hover{color:var(--green);border-bottom-color:var(--green)}
+.footer-credit a span{font-size:11px;margin-left:5px}
+@media(max-width:760px){.footer .footer-credit{align-self:flex-end}.footer-credit>span{display:none}}

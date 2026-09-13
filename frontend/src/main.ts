@@ -70,7 +70,7 @@ npm run example:external-agent -- "low-poly lunar repair drone"</pre></div>
     <div class="build-links"><a href="/openapi.json" target="_blank" rel="noopener noreferrer">OPENAPI SPEC ↗</a><a href="https://github.com/ValenteCreativo/mesh402/blob/main/examples/external-agent.ts" target="_blank" rel="noopener noreferrer">CALLER EXAMPLE ↗</a></div>
   </div>
 </section>
-<footer class="footer"><div class="footer-brand">${icon}<span>MESH402</span><small>INFRASTRUCTURE, NOT AN INTERFACE.</small></div><div class="stack"><span>POWERED BY</span><p>Nebius / Qwen <i>REASON</i> <b>·</b> Blocky402 <i>VERIFY</i> <b>·</b> Hedera <i>SETTLE</i> <b>·</b> Tripo <i>CREATE</i></p></div><span class="footer-end">BUILT FOR MACHINES.<br>UNDERSTOOD BY HUMANS.</span></footer>
+<footer class="footer"><div class="footer-brand">${icon}<span>MESH402</span><small>INFRASTRUCTURE, NOT AN INTERFACE.</small></div><div class="stack"><span>POWERED BY</span><p>Nebius / Qwen <i>REASON</i> <b>·</b> Blocky402 <i>VERIFY</i> <b>·</b> Hedera <i>SETTLE</i> <b>·</b> Tripo <i>CREATE</i></p></div><div class="footer-end footer-credit"><span>BUILT FOR MACHINES.<br>UNDERSTOOD BY HUMANS.</span><a href="https://taak-studio.cc" target="_blank" rel="noopener noreferrer" aria-label="Taak Studio — visit our studio">Taak Studio <span aria-hidden="true">↗</span></a></div></footer>
 </main><div class="error-banner" id="error" role="alert" hidden></div>`;
 
 let evidence: Evidence;
