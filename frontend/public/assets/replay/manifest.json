@@ -1,0 +1,33 @@
+{
+  "request": "I am building a retro-futuristic browser game and need a low-poly robotic street food cart as a production-ready 3D GLB asset. Acquire one for me.",
+  "tool": "generate_3d_asset",
+  "prompt": "low-poly robotic street food cart, retro-futuristic design, production-ready 3D GLB asset",
+  "model": "Qwen/Qwen3-235B-A22B-Instruct-2507",
+  "initialHttpStatus": 402,
+  "finalHttpStatus": 200,
+  "network": "hedera:testnet",
+  "amount": "0.001 HBAR",
+  "payer": "0.0.10508677",
+  "recipient": "0.0.10509474",
+  "transactionId": "0.0.7162784@1789266602.685455064",
+  "verified": true,
+  "settled": true,
+  "taskId": "fb48a85c-ac6c-4d25-8ba0-641c2089df24",
+  "credits": 20,
+  "bytes": 41331488,
+  "assetUrl": "/assets/replay/street-food-cart.optimized.glb",
+  "finalAnswer": "A production-ready low-poly robotic street food cart in GLB format has been successfully generated and paid for with 0.001 HBAR on the Hedera testnet. The asset is available for download and suitable for use in your retro-futuristic browser game.",
+  "finalizationRecovered": true,
+  "generationMs": 137740,
+  "createdAt": "2026-09-13T02:30:11.535176Z",
+  "completedAt": "2026-09-13T02:32:27.060102Z",
+  "hashscan": "https://hashscan.io/testnet/transaction/0.0.7162784%401789266602.685455064",
+  "receiptUrl": "/demo/receipt",
+  "originalSha256": "7d5f8237006bb9dee776091e6a59aa6a04bc60c1e021f1c9ab784445cba3d1c2",
+  "derivative": {
+    "bytes": 7961160,
+    "sha256": "46dc52d4e34cb1689f1f5856c626b3d0e1f15f8cf566f725e50d517a313a454c",
+    "method": "glTF Transform 4.5.0 Meshopt, position 16-bit / normal 12-bit / UV 14-bit quantization; original JPEG textures unchanged",
+    "reductionPercent": 80.74
+  }
+}

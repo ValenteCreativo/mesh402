@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
@@ -59,7 +60,7 @@ export function createChamber(host: HTMLElement, onLoad: (fraction: number) => v
   let wire = false;
   let scanning = false;
   let desired = '';
-  const loader = new GLTFLoader();
+  const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
   async function load(url: string) {
     desired = url;
     if (!cache.has(url)) {

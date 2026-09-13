@@ -2,6 +2,7 @@ import './style.css';
 import { createChamber } from './chamber.js';
 
 type Evidence = {
+  receiptUrl?: string; derivative?: { bytes: number; method: string; sha256: string };
   request: string; tool: string; prompt: string; model: string; initialHttpStatus: number; finalHttpStatus: number;
   network: string; amount: string; payer: string; recipient: string; transactionId: string; hashscan: string;
   verified: boolean; settled: boolean; taskId: string; bytes: number; credits: number; assetUrl: string;
@@ -40,7 +41,7 @@ $('#app').innerHTML = `
       <div class="chamber" id="chamber"><div id="viewport"></div><span class="corner c1"></span><span class="corner c2"></span><span class="corner c3"></span><span class="corner c4"></span>
         <div class="chamber-side"><span>Y ↑</span><span>OBJECT SPACE / NORMALIZED</span></div>
         <div class="chamber-mark">M<span>—</span>01</div>
-        <div class="load-status" id="load-status"><span class="load-cross">+</span><strong>LOADING VERIFIED GLB</strong><span id="load-progress">LOCAL ASSET / 41.3 MB</span></div>
+        <div class="load-status" id="load-status"><span class="load-cross">+</span><strong>LOADING VERIFIED GLB</strong><span id="load-progress">PACKAGED VERIFIED WEB ASSET</span></div>
         <div class="machine-state" id="machine-state" aria-live="polite"><span class="state-dot"></span><span id="state-label">VERIFIED ASSET</span></div>
         <div class="object-caption"><span id="object-id">OBJECT / FB48A85C</span><span id="object-type">ROBOTIC STREET FOOD CART</span></div>
         <div class="viewer-controls" aria-label="3D viewer controls"><button id="rotate" aria-label="Toggle auto rotation" aria-pressed="true">↻</button><button id="wire" aria-label="Toggle wireframe" aria-pressed="false">▧</button><button id="reset" aria-label="Reset camera">⌖</button></div>
@@ -51,7 +52,7 @@ $('#app').innerHTML = `
   <div class="machine-footer"><div class="status-result"><div class="http-transition" id="http-transition" data-phase="fulfilled" aria-label="HTTP request status"><span class="http-start">402</span><span class="http-arrow" aria-hidden="true">→</span><span class="result-code" id="http-code">200</span></div><div><strong id="result-title">REQUEST FULFILLED</strong><span id="result-note">One agent. One payment. One real asset.</span></div></div><div class="run-facts"><div><span>NETWORK</span><strong>HEDERA TESTNET</strong></div><div><span>GENERATION</span><strong id="duration">— S</strong></div><div><span>PROVIDER USAGE</span><strong id="credits">20 CREDITS</strong></div></div><a class="download" id="download" download>DOWNLOAD GLB <span>↓</span></a></div>
 </section>
 <div class="evidence-strip"><span><i></i> <span id="evidence-claim">REAL TRANSACTION. REAL GENERATION. REAL GLB.</span></span><button id="evidence-toggle" aria-expanded="false">INSPECT EXECUTION RECEIPT <span>+</span></button></div>
-<section class="evidence-detail" id="evidence-detail" hidden><div><span class="eyebrow">VERIFIABLE EXECUTION</span><h3>Nothing here is hypothetical.</h3><p id="final-answer"></p><small id="finalization-note"></small></div><dl><dt>TRANSACTION</dt><dd id="receipt-transaction"></dd><dt>TRIPO TASK</dt><dd id="receipt-task"></dd><dt>ORIGINAL INTENT</dt><dd id="receipt-intent"></dd><dt>AGENT ARGUMENT</dt><dd id="receipt-prompt"></dd><dt>LOCAL ASSET</dt><dd id="receipt-asset"></dd></dl><a href="/demo/receipt" class="text-link">DOWNLOAD PUBLIC RECEIPT ↗</a></section>
+<section class="evidence-detail" id="evidence-detail" hidden><div><span class="eyebrow">VERIFIABLE EXECUTION</span><h3>Nothing here is hypothetical.</h3><p id="final-answer"></p><small id="finalization-note"></small></div><dl><dt>TRANSACTION</dt><dd id="receipt-transaction"></dd><dt>TRIPO TASK</dt><dd id="receipt-task"></dd><dt>ORIGINAL INTENT</dt><dd id="receipt-intent"></dd><dt>AGENT ARGUMENT</dt><dd id="receipt-prompt"></dd><dt>LOCAL ASSET</dt><dd id="receipt-asset"></dd></dl><a href="/demo/receipt" id="receipt-download" class="text-link">DOWNLOAD PUBLIC RECEIPT ↗</a></section>
 <section class="protocol" id="protocol"><div class="protocol-heading"><span class="eyebrow">THE PROTOCOL / 002</span><h2>One capability.<br><span>Any agent.</span></h2><p>Agents shouldn't subscribe to tools.<br>They should buy capabilities.</p></div><div class="protocol-content"><div class="architecture"><div class="arch-agent">${icon}<span>YOUR AGENT</span><small>INTENT + PAYMENT</small></div><span class="arch-arrow">→</span><div class="arch-mesh"><strong>MESH402</strong><span>PAID CAPABILITY</span></div><div class="arch-branches"><div><span>x402</span><b>HEDERA</b><small>SETTLE</small></div><div><span>generation</span><b>TRIPO</b><small>FABRICATE</small></div></div><span class="arch-arrow">→</span><div class="arch-glb"><span>↗</span><strong>.GLB</strong><small>CONSUME</small></div></div><div class="principles"><div><span>01</span><h3>No subscription.</h3><p>Pay per generation.</p></div><div><span>02</span><h3>No provider key.</h3><p>The agent needs no Tripo credential.</p></div><div><span>03</span><h3>Machine-native.</h3><p>Discover. Pay. Consume.</p></div></div><div class="code-example"><div><span class="mono">THE CAPABILITY</span><span>HTTP / x402 v2</span></div><pre><span class="code-green">POST</span> /api/generate-3d
 { "prompt": "low-poly robotic street food cart" }
 <span class="code-dim">402 → sign payment → retry →</span> <span class="code-green">200 + GLB</span></pre></div></div></section>
@@ -66,6 +67,8 @@ let replayTimer = 0;
 let step = 5;
 let liveUsed = false;
 let dryRun = true;
+let operatorAuthorized = false;
+let storedExecutionStatus = 'ready';
 let loaded = false;
 let rotating = !matchMedia('(prefers-reduced-motion: reduce)').matches;
 let chamber: ReturnType<typeof createChamber>;
@@ -78,7 +81,7 @@ function applyEvidence(data: Evidence) {
   $('#payment-price').textContent = data.amount;
   $('#accounts').textContent = `${data.payer} → ${data.recipient}`;
   const transaction = $<HTMLAnchorElement>('#transaction'); transaction.href = data.hashscan; transaction.title = data.transactionId;
-  $('#delivery-meta').textContent = `GLB · ${(data.bytes / 1e6).toFixed(1)} MB · PBR TEXTURES`;
+  $('#delivery-meta').textContent = `GLB · ${((data.derivative?.bytes ?? data.bytes) / 1e6).toFixed(1)} MB · ${data.derivative ? 'WEB DERIVATIVE' : 'PBR TEXTURES'}`;
   $('#duration').textContent = `${(data.generationMs / 1000).toFixed(1)} S`;
   $('#credits').textContent = `${data.credits} CREDITS`;
   $<HTMLAnchorElement>('#download').href = data.assetUrl;
@@ -92,7 +95,8 @@ function applyEvidence(data: Evidence) {
   $('#receipt-prompt').textContent = data.prompt;
   $('#evidence-toggle').hidden = false;
   $('#evidence-claim').textContent = 'REAL TRANSACTION. REAL GENERATION. REAL GLB.';
-  $('#receipt-asset').textContent = `${data.taskId}.glb / ${data.bytes.toLocaleString()} bytes`;
+  $<HTMLAnchorElement>('#receipt-download').href = data.receiptUrl ?? '/demo/receipt';
+  $('#receipt-asset').textContent = `${data.taskId}.glb / ${data.bytes.toLocaleString()} original bytes${data.derivative ? ` · Web derivative: ${data.derivative.bytes.toLocaleString()} bytes (${data.derivative.method}); not byte-identical to original.` : ''}`;
 }
 function renderStage(value: number) {
   step = value;
@@ -113,7 +117,7 @@ function renderStage(value: number) {
   $('#download').setAttribute('aria-disabled', String(value !== 5));
   $('#download').tabIndex = value === 5 ? 0 : -1;
   chamber?.setState(value === 5, value >= 2 && value < 5);
-  $('#chamber-note').textContent = value === 5 ? 'THE ACTUAL ASSET PURCHASED BY THE AGENT' : mode === 'replay' ? 'MACHINE-STATE VISUALIZATION / NOT GEOMETRY STREAMING' : dryRun ? 'TOOL SELECTION ONLY / NO PAYMENT OR GENERATION' : value < 4 ? 'AWAITING AGENT / PAYMENT MILESTONES' : 'WAITING FOR TRIPO / NOT GEOMETRY STREAMING';
+  $('#chamber-note').textContent = value === 5 ? (evidence.derivative ? 'WEB DERIVATIVE OF THE VERIFIED TRIPO ASSET' : 'THE ACTUAL ASSET PURCHASED BY THE AGENT') : mode === 'replay' ? 'MACHINE-STATE VISUALIZATION / NOT GEOMETRY STREAMING' : dryRun ? 'TOOL SELECTION ONLY / NO PAYMENT OR GENERATION' : value < 4 ? 'AWAITING AGENT / PAYMENT MILESTONES' : 'WAITING FOR TRIPO / NOT GEOMETRY STREAMING';
   if (value < 4) { $('#progress').textContent = 'STANDBY'; $('#progress-fill').style.width = '0%'; }
   if (value === 4) { $('#progress').textContent = mode === 'replay' ? 'CAPTURED TASK / REPLAY' : 'RUNNING'; $('#progress-fill').style.width = '50%'; }
   if (value === 5) { $('#progress').textContent = '100% / SUCCESS'; $('#progress-fill').style.width = '100%'; }
@@ -165,11 +169,13 @@ function switchMode(next: 'replay' | 'live') {
   $('#run-label').textContent = live ? liveUsed ? 'LIVE ATTEMPT USED' : dryRun ? 'RUN AGENT DRY RUN' : 'RUN AGENT' : 'REPLAY VERIFIED RUN';
   $('#run-icon').textContent = live ? '↗' : '↻';
   $<HTMLButtonElement>('#run').disabled = live || !loaded;
+  if (live && operatorAuthorized && storedExecutionStatus !== 'ready') $('#mode-note').textContent = `Previous execution: ${storedExecutionStatus}. Inspect /demo/operator/state; human reconciliation required before another attempt.`;
+  if (live && !operatorAuthorized) $('#mode-note').innerHTML = 'Operator session required. <a href="/operator">Authorize operator ↗</a>';
   if (!live) { applyEvidence(replayEvidence); void chamber.load(replayEvidence.assetUrl); renderStage(5); }
   else { $('#evidence-detail').hidden = true; $('#evidence-toggle').hidden = true; $('#evidence-toggle').setAttribute('aria-expanded', 'false'); $('#evidence-toggle span').textContent = '+'; $('#evidence-claim').textContent = dryRun ? 'DRY RUN / NO PAYMENT OR GENERATION' : 'AWAITING REAL EXECUTION EVIDENCE'; $('#delivery-meta').textContent = 'GLB · AWAITING DELIVERY'; $('#object-id').textContent = 'OBJECT / PENDING'; renderStage(0); $('#object-type').textContent = 'AWAITING A NEW AGENT REQUEST'; $('#accounts').textContent = 'AWAITING PAYMENT'; $('#duration').textContent = '—'; $('#credits').textContent = '—'; $('#transaction').removeAttribute('href'); $('#transaction').title = 'No live transaction yet'; }
 }
 async function runLive() {
-  if (liveUsed || !$<HTMLInputElement>('#consent').checked) return;
+  if (!operatorAuthorized || liveUsed || !$<HTMLInputElement>('#consent').checked) return;
   const intent = $<HTMLTextAreaElement>('#intent').value.trim();
   if (!intent) { error('Enter an intent for your agent.'); return; }
   running = true; liveUsed = true; toggleModeButtons(true);
@@ -213,7 +219,7 @@ async function runLive() {
 $('#run').addEventListener('click', () => { if (mode === 'replay') startReplay(); else void runLive(); });
 $('#replay-mode').addEventListener('click', () => switchMode('replay'));
 $('#live-mode').addEventListener('click', () => switchMode('live'));
-$('#consent').addEventListener('change', () => { $<HTMLButtonElement>('#run').disabled = !$<HTMLInputElement>('#consent').checked || liveUsed; });
+$('#consent').addEventListener('change', () => { $<HTMLButtonElement>('#run').disabled = !$<HTMLInputElement>('#consent').checked || liveUsed || !operatorAuthorized; });
 $('#download').addEventListener('click', event => { if (step !== 5) event.preventDefault(); });
 $('#rotate').addEventListener('click', () => { rotating = !rotating; chamber.setRotate(rotating); $('#rotate').setAttribute('aria-pressed', String(rotating)); });
 $('#wire').addEventListener('click', () => { const value = $('#wire').getAttribute('aria-pressed') !== 'true'; chamber.setWire(value); $('#wire').setAttribute('aria-pressed', String(value)); });
@@ -225,6 +231,13 @@ async function boot() {
     if (!configResponse.ok) throw new Error('Could not determine the server execution mode.');
     const config = await configResponse.json();
     if (!['dry-run', 'live'].includes(config.executionMode)) throw new Error('Unknown server execution mode.');
+    operatorAuthorized = config.operatorAuthorized === true;
+    if (operatorAuthorized) {
+      const stateResponse = await fetch('/demo/operator/state');
+      if (!stateResponse.ok) throw new Error('Could not verify the persisted execution lock.');
+      storedExecutionStatus = (await stateResponse.json()).status;
+      liveUsed = storedExecutionStatus !== 'ready';
+    }
     dryRun = config.executionMode === 'dry-run';
     $('#consent-label').textContent = dryRun ? 'Run real Nebius tool selection only. No payment signing or Tripo generation.' : 'Authorize one 0.001 HBAR payment + one Tripo generation if the agent selects the tool.';
     const response = await fetch('/demo/evidence'); if (!response.ok) throw new Error('Could not read the verified local receipt.');

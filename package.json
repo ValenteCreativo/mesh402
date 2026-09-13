@@ -14,10 +14,12 @@
     "test:e2e": "node --env-file=.env.local --import tsx scripts/test-x402.ts",
     "test:x402": "node --env-file=.env.local --import tsx scripts/test-x402.ts",
     "test:tripo": "node --env-file=.env.local --import tsx scripts/test-tripo.ts",
-    "dev:visual": "vite --config frontend/vite.config.ts",
+    "dev:visual": "node --env-file-if-exists=.env.local node_modules/vite/bin/vite.js --config frontend/vite.config.ts",
     "build:visual": "tsc -p frontend/tsconfig.json && vite build --config frontend/vite.config.ts",
     "preview:visual": "vite preview --config frontend/vite.config.ts",
-    "typecheck:visual": "tsc -p frontend/tsconfig.json"
+    "typecheck:visual": "tsc -p frontend/tsconfig.json",
+    "start": "node --env-file-if-exists=.env.local --import tsx server/start.ts",
+    "test:wrapper": "node --import tsx --test server/*.test.ts"
   },
   "devDependencies": {
     "@types/node": "^22.20.2",

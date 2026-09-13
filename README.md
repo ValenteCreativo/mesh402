@@ -124,87 +124,34 @@ Final answers use 1024 tokens and a concise-summary instruction. A truncated
 answer remains an explicit finalization failure; it never triggers a payment,
 generation, or automatic retry. Use finalization only to recover the wording.
 
-## Visual experience — local demo
+## Visual experience and production wrapper
 
-The completed backend is preserved at `backend-complete` (`222314a`); the earlier
-`mvp-e2e` tag is unchanged. The visual layer lives entirely in `frontend/` and
-wraps the existing agent CLI without changing payment or Tripo behavior.
+The backend milestones `mvp-e2e` and `backend-complete` remain frozen. Vite/Three.js
+serves the existing machine UI. The production Node wrapper serves the same built
+frontend and reuses the CLI bridge, with no payment/generation refactor.
 
 ```sh
-npm run dev:visual
-# http://127.0.0.1:4020/
-
-npm run typecheck:visual
-npm run build:visual
-npm run preview:visual
+npm run dev:visual          # local Vite development
+npm run build:visual       # type-check + production assets
+npm start                  # production Node server, default port 4020
+npm run test:wrapper       # no spending
+npm run test:agent:guards  # mocked safety checks, no spending
 ```
 
-**Replay is the default.** The page replays the successful autonomous street food
-cart execution in about 15 seconds, clearly labeled as an accelerated verified
-replay. Sequence timings are narrative compression, not captured timestamps.
-The scanning plane is a machine-state metaphor, not progressive Tripo geometry.
-No inference, signing, settlement, or generation occurs during replay.
+REPLAY is public, default, and zero-spend. It uses the packaged 7.96 MB Meshopt web
+derivative and sanitized manifest from the original autonomous street-food-cart
+run. The original 41.33 MB forensic GLB and raw receipts remain unchanged and
+Git-ignored. See [optimization provenance](docs/REPLAY-ASSET.md).
 
-The local bridge reads `generated/mesh402-agent-receipt.json`, preserves an exact
-copy at `generated/mesh402-verified-demo.json`, and serves the unchanged
-`generated/fb48a85c-ac6c-4d25-8ba0-641c2089df24.glb` (41,331,488 bytes).
-Recipient metadata, omitted by the original agent receipt, is recovered from the
-prior successful `mesh402-e2e-receipt.json` with the same payer/recipient pair,
-as confirmed in the visual brief. No account keys are read into frontend code.
-The public receipt contains only a selected set of evidence fields; original
-signed URLs and filesystem paths are not exposed. The final-answer recovery is
-explicitly noted in the expanded receipt.
+LIVE is operator-only in both dry-run and paid modes. Set `LIVE_OPERATOR_SECRET`
+server-side, visit `/operator`, and authorize a one-hour session. Server default
+`MESH402_UI_EXECUTION=dry-run` invokes real Nebius with the existing non-spending
+CLI branch. Paid mode requires explicit operator configuration and spend consent;
+credentials alone never enable spending. Attempt locks and approved assets persist
+in `generated/wrapper/`. No automatic retries or global operator gate on `/api/*`.
 
-**LIVE uses a server-controlled execution mode.** By default `npm run dev:visual`
-(and `preview:visual`) use `dry-run`. The existing LIVE tab submits an intent to
-`POST /demo/live`, which starts the unmodified `scripts/test-agent.ts --dry-run`.
-Nebius really selects a tool and receives a non-spending tool result; the CLI
-never starts the payment service, discovers Blocky402 requirements, signs a
-payment, or calls Tripo in this branch. The UI explicitly labels this mode and
-shows the real final answer without claiming an asset was delivered.
-
-The server exposes only `{ executionMode }` at `GET /demo/config`. Request bodies
-cannot select paid mode. After separate human authorization, the local operator
-can start the server with `MESH402_UI_EXECUTION=live npm run dev:visual`; this uses
-the existing cost consent and `scripts/test-agent.ts --live`. Do not enable or
-execute paid mode as part of Phase A validation.
-
-Both modes use the same bridge, child-process invocation, and NDJSON response.
-One attempt is allowed per server session, including failures; the guard is checked
-after body parsing to prevent concurrent submissions. No automatic retries occur.
-The dry-run child runs in `generated/ui-dry-run/`, saving its original CLI receipt
-to `generated/ui-dry-run/generated/mesh402-agent-receipt.json`. The accepted paid
-receipt and replay snapshot are untouched. Paid mode retains the original cwd and
-receipt path. Secrets are loaded by Node from the absolute `.env.local` path in
-the server-side child only; they are never Vite client environment variables.
-
-Tool selection, signing, verification, settlement, Tripo task creation and polling
-progress are actual CLI events. The CLI exposes the initial 402 indirectly through
-the signing event after its requirement guard; no separate earlier 402 event is
-invented. Asset delivery and the final answer come from the new matching receipt
-after CLI exit. The chamber scan is only a labeled state visualization, never
-progressive geometry. Replay instead uses captured evidence and compressed timers.
-
-A lost browser connection does not cancel or repeat the underlying job. There is
-no reconnect/job recovery API. Nebius calls each have a 90-second timeout, Tripo
-polling defaults to four minutes, and the paid HTTP client allows ten minutes.
-The bridge itself has no job deadline and holds an NDJSON response open until the
-CLI exits. This requires a long-running local Node process, local files, and a
-proxy that permits long responses without buffering if deployed later; a static
-host alone is insufficient. Deployment and timeout redesign are outside Phase A.
-
-Viewer: Three.js, GLTFLoader, OrbitControls, bounded DPR, cached model parsing,
-local GLB serving with immutable caching, no postprocessing. Fonts are served
-locally with their OFL licenses. Both replay assets and fonts work without an
-external runtime fetch. The server binds only to 127.0.0.1 and rejects cross-origin
-live requests. No secrets are sent to the browser.
-
-First-pass limitations: local demo only; `dist-visual` alone needs the local bridge
-and generated files (use `preview:visual`, not a generic static host). Original
-GLB is intentionally uncompressed. The scene normalizes model size for viewing;
-it does not claim real-world dimensions. Previous assets are not loaded, to keep
-the agent-purchased hero and startup cost focused. Generated artifacts remain
-Git-ignored and must be present on the demo machine.
+See [Render setup and funding boundaries](docs/DEPLOYMENT.md) for exact build/start,
+environment, persistent disk, recovery, public receipt, and operator instructions.
 
 ### Milestone 4 — browser LIVE validation
 
