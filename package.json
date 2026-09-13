@@ -13,15 +13,22 @@
     "test:agent:guards": "node --import tsx --test src/agent/mesh402-tool.test.ts",
     "test:e2e": "node --env-file=.env.local --import tsx scripts/test-x402.ts",
     "test:x402": "node --env-file=.env.local --import tsx scripts/test-x402.ts",
-    "test:tripo": "node --env-file=.env.local --import tsx scripts/test-tripo.ts"
+    "test:tripo": "node --env-file=.env.local --import tsx scripts/test-tripo.ts",
+    "dev:visual": "vite --config frontend/vite.config.ts",
+    "build:visual": "tsc -p frontend/tsconfig.json && vite build --config frontend/vite.config.ts",
+    "preview:visual": "vite preview --config frontend/vite.config.ts",
+    "typecheck:visual": "tsc -p frontend/tsconfig.json"
   },
   "devDependencies": {
     "@types/node": "^22.20.2",
+    "@types/three": "^0.186.0",
     "tsx": "^4.23.13",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0"
   },
   "dependencies": {
     "@x402/core": "2.25.0",
-    "@x402/hedera": "2.25.0"
+    "@x402/hedera": "2.25.0",
+    "three": "^0.186.0"
   }
 }

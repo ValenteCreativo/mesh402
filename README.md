@@ -123,3 +123,57 @@ Future agent runs preserve the actual conversation for finalization.
 Final answers use 1024 tokens and a concise-summary instruction. A truncated
 answer remains an explicit finalization failure; it never triggers a payment,
 generation, or automatic retry. Use finalization only to recover the wording.
+
+## Visual experience — local demo
+
+The completed backend is preserved at `backend-complete` (`222314a`); the earlier
+`mvp-e2e` tag is unchanged. The visual layer lives entirely in `frontend/` and
+wraps the existing agent CLI without changing payment or Tripo behavior.
+
+```sh
+npm run dev:visual
+# http://127.0.0.1:4020/
+
+npm run typecheck:visual
+npm run build:visual
+npm run preview:visual
+```
+
+**Replay is the default.** The page replays the successful autonomous street food
+cart execution in about 15 seconds, clearly labeled as an accelerated verified
+replay. Sequence timings are narrative compression, not captured timestamps.
+The scanning plane is a machine-state metaphor, not progressive Tripo geometry.
+No inference, signing, settlement, or generation occurs during replay.
+
+The local bridge reads `generated/mesh402-agent-receipt.json`, preserves an exact
+copy at `generated/mesh402-verified-demo.json`, and serves the unchanged
+`generated/fb48a85c-ac6c-4d25-8ba0-641c2089df24.glb` (41,331,488 bytes).
+Recipient metadata, omitted by the original agent receipt, is recovered from the
+prior successful `mesh402-e2e-receipt.json` with the same payer/recipient pair,
+as confirmed in the visual brief. No account keys are read into frontend code.
+The public receipt contains only a selected set of evidence fields; original
+signed URLs and filesystem paths are not exposed. The final-answer recovery is
+explicitly noted in the expanded receipt.
+
+**Live is opt-in.** Select LIVE, enter an intent, check the explicit cost consent,
+and click RUN AGENT. This starts the unmodified `scripts/test-agent.ts --live`
+once. The bridge streams actual stdout events and reads the resulting receipt.
+It never simulates successful live events or substitutes the replay asset on
+failure. One live attempt is allowed per dev-server session, including failures;
+manual restart is required before another attempt. Reloading the page does not
+reset that server lock. A lost browser connection does not cancel or repeat the
+underlying paid job. The CLI's original single-call/payment guard still applies.
+Live execution was not run as part of visual development.
+
+Viewer: Three.js, GLTFLoader, OrbitControls, bounded DPR, cached model parsing,
+local GLB serving with immutable caching, no postprocessing. Fonts are served
+locally with their OFL licenses. Both replay assets and fonts work without an
+external runtime fetch. The server binds only to 127.0.0.1 and rejects cross-origin
+live requests. No secrets are sent to the browser.
+
+First-pass limitations: local demo only; `dist-visual` alone needs the local bridge
+and generated files (use `preview:visual`, not a generic static host). Original
+GLB is intentionally uncompressed. The scene normalizes model size for viewing;
+it does not claim real-world dimensions. Previous assets are not loaded, to keep
+the agent-purchased hero and startup cost focused. Generated artifacts remain
+Git-ignored and must be present on the demo machine.
