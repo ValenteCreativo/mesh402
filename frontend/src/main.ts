@@ -21,7 +21,7 @@ $('#app').innerHTML = `
       <label for="intent" class="request-label">What does your agent need?</label>
       <textarea id="intent" readonly aria-describedby="mode-note" spellcheck="false">Loading verified request…</textarea>
       <div class="request-footer"><span class="small-square">↳</span><span id="mode-note">Original natural-language request</span></div>
-      <div id="live-consent" hidden><label><input type="checkbox" id="consent"> Authorize one 0.001 HBAR payment + one Tripo generation if the agent selects the tool.</label></div>
+      <div id="live-consent" hidden><label><input type="checkbox" id="consent"> <span id="consent-label">Authorize one 0.001 HBAR payment + one Tripo generation if the agent selects the tool.</span></label></div>
       <button class="run-button" id="run" disabled><span id="run-label">LOADING VERIFIED ASSET</span><span id="run-icon">↗</span></button>
       <div class="run-subline"><span id="run-hint">CAPTURED EXECUTION / ACCELERATED REPLAY</span><span>AGENT MODE</span></div>
     </div>
@@ -50,7 +50,7 @@ $('#app').innerHTML = `
   </div>
   <div class="machine-footer"><div class="status-result"><div class="http-transition" id="http-transition" data-phase="fulfilled" aria-label="HTTP request status"><span class="http-start">402</span><span class="http-arrow" aria-hidden="true">→</span><span class="result-code" id="http-code">200</span></div><div><strong id="result-title">REQUEST FULFILLED</strong><span id="result-note">One agent. One payment. One real asset.</span></div></div><div class="run-facts"><div><span>NETWORK</span><strong>HEDERA TESTNET</strong></div><div><span>GENERATION</span><strong id="duration">— S</strong></div><div><span>PROVIDER USAGE</span><strong id="credits">20 CREDITS</strong></div></div><a class="download" id="download" download>DOWNLOAD GLB <span>↓</span></a></div>
 </section>
-<div class="evidence-strip"><span><i></i> REAL TRANSACTION. REAL GENERATION. REAL GLB.</span><button id="evidence-toggle" aria-expanded="false">INSPECT EXECUTION RECEIPT <span>+</span></button></div>
+<div class="evidence-strip"><span><i></i> <span id="evidence-claim">REAL TRANSACTION. REAL GENERATION. REAL GLB.</span></span><button id="evidence-toggle" aria-expanded="false">INSPECT EXECUTION RECEIPT <span>+</span></button></div>
 <section class="evidence-detail" id="evidence-detail" hidden><div><span class="eyebrow">VERIFIABLE EXECUTION</span><h3>Nothing here is hypothetical.</h3><p id="final-answer"></p><small id="finalization-note"></small></div><dl><dt>TRANSACTION</dt><dd id="receipt-transaction"></dd><dt>TRIPO TASK</dt><dd id="receipt-task"></dd><dt>ORIGINAL INTENT</dt><dd id="receipt-intent"></dd><dt>AGENT ARGUMENT</dt><dd id="receipt-prompt"></dd><dt>LOCAL ASSET</dt><dd id="receipt-asset"></dd></dl><a href="/demo/receipt" class="text-link">DOWNLOAD PUBLIC RECEIPT ↗</a></section>
 <section class="protocol" id="protocol"><div class="protocol-heading"><span class="eyebrow">THE PROTOCOL / 002</span><h2>One capability.<br><span>Any agent.</span></h2><p>Agents shouldn't subscribe to tools.<br>They should buy capabilities.</p></div><div class="protocol-content"><div class="architecture"><div class="arch-agent">${icon}<span>YOUR AGENT</span><small>INTENT + PAYMENT</small></div><span class="arch-arrow">→</span><div class="arch-mesh"><strong>MESH402</strong><span>PAID CAPABILITY</span></div><div class="arch-branches"><div><span>x402</span><b>HEDERA</b><small>SETTLE</small></div><div><span>generation</span><b>TRIPO</b><small>FABRICATE</small></div></div><span class="arch-arrow">→</span><div class="arch-glb"><span>↗</span><strong>.GLB</strong><small>CONSUME</small></div></div><div class="principles"><div><span>01</span><h3>No subscription.</h3><p>Pay per generation.</p></div><div><span>02</span><h3>No provider key.</h3><p>The agent needs no Tripo credential.</p></div><div><span>03</span><h3>Machine-native.</h3><p>Discover. Pay. Consume.</p></div></div><div class="code-example"><div><span class="mono">THE CAPABILITY</span><span>HTTP / x402 v2</span></div><pre><span class="code-green">POST</span> /api/generate-3d
 { "prompt": "low-poly robotic street food cart" }
@@ -65,6 +65,7 @@ let running = false;
 let replayTimer = 0;
 let step = 5;
 let liveUsed = false;
+let dryRun = true;
 let loaded = false;
 let rotating = !matchMedia('(prefers-reduced-motion: reduce)').matches;
 let chamber: ReturnType<typeof createChamber>;
@@ -89,6 +90,8 @@ function applyEvidence(data: Evidence) {
   $('#receipt-task').textContent = data.taskId;
   $('#receipt-intent').textContent = data.request;
   $('#receipt-prompt').textContent = data.prompt;
+  $('#evidence-toggle').hidden = false;
+  $('#evidence-claim').textContent = 'REAL TRANSACTION. REAL GENERATION. REAL GLB.';
   $('#receipt-asset').textContent = `${data.taskId}.glb / ${data.bytes.toLocaleString()} bytes`;
 }
 function renderStage(value: number) {
@@ -110,7 +113,7 @@ function renderStage(value: number) {
   $('#download').setAttribute('aria-disabled', String(value !== 5));
   $('#download').tabIndex = value === 5 ? 0 : -1;
   chamber?.setState(value === 5, value >= 2 && value < 5);
-  $('#chamber-note').textContent = value === 5 ? 'THE ACTUAL ASSET PURCHASED BY THE AGENT' : mode === 'replay' ? 'MACHINE-STATE VISUALIZATION / NOT GEOMETRY STREAMING' : 'WAITING FOR TRIPO / NOT GEOMETRY STREAMING';
+  $('#chamber-note').textContent = value === 5 ? 'THE ACTUAL ASSET PURCHASED BY THE AGENT' : mode === 'replay' ? 'MACHINE-STATE VISUALIZATION / NOT GEOMETRY STREAMING' : dryRun ? 'TOOL SELECTION ONLY / NO PAYMENT OR GENERATION' : value < 4 ? 'AWAITING AGENT / PAYMENT MILESTONES' : 'WAITING FOR TRIPO / NOT GEOMETRY STREAMING';
   if (value < 4) { $('#progress').textContent = 'STANDBY'; $('#progress-fill').style.width = '0%'; }
   if (value === 4) { $('#progress').textContent = mode === 'replay' ? 'CAPTURED TASK / REPLAY' : 'RUNNING'; $('#progress-fill').style.width = '50%'; }
   if (value === 5) { $('#progress').textContent = '100% / SUCCESS'; $('#progress-fill').style.width = '100%'; }
@@ -157,13 +160,13 @@ function switchMode(next: 'replay' | 'live') {
   $('#live-consent').hidden = !live;
   $<HTMLInputElement>('#consent').checked = false;
   $('#mode-note').textContent = live ? 'Your agent decides whether to purchase a 3D asset.' : 'Original natural-language request';
-  $('#source-label').textContent = live ? 'LIVE MODE · AWAITING AUTHORIZATION' : 'VERIFIED RUN · NO NEW PAYMENT';
-  $('#run-hint').textContent = live ? 'ONE ATTEMPT / APPROX. 2–3 MINUTES' : 'CAPTURED EXECUTION / ACCELERATED REPLAY';
-  $('#run-label').textContent = live ? liveUsed ? 'LIVE ATTEMPT USED' : 'RUN AGENT' : 'REPLAY VERIFIED RUN';
+  $('#source-label').textContent = live ? dryRun ? 'LIVE BRIDGE / DRY RUN · NO PAYMENT' : 'LIVE MODE · AWAITING AUTHORIZATION' : 'VERIFIED RUN · NO NEW PAYMENT';
+  $('#run-hint').textContent = live ? dryRun ? 'REAL NEBIUS / NO PAYMENT OR GENERATION' : 'ONE ATTEMPT / APPROX. 2–3 MINUTES' : 'CAPTURED EXECUTION / ACCELERATED REPLAY';
+  $('#run-label').textContent = live ? liveUsed ? 'LIVE ATTEMPT USED' : dryRun ? 'RUN AGENT DRY RUN' : 'RUN AGENT' : 'REPLAY VERIFIED RUN';
   $('#run-icon').textContent = live ? '↗' : '↻';
   $<HTMLButtonElement>('#run').disabled = live || !loaded;
   if (!live) { applyEvidence(replayEvidence); void chamber.load(replayEvidence.assetUrl); renderStage(5); }
-  else { renderStage(0); $('#object-type').textContent = 'AWAITING A NEW AGENT REQUEST'; $('#accounts').textContent = 'AWAITING PAYMENT'; $('#duration').textContent = '—'; $('#credits').textContent = '—'; $('#transaction').removeAttribute('href'); $('#transaction').title = 'No live transaction yet'; }
+  else { $('#evidence-detail').hidden = true; $('#evidence-toggle').hidden = true; $('#evidence-toggle').setAttribute('aria-expanded', 'false'); $('#evidence-toggle span').textContent = '+'; $('#evidence-claim').textContent = dryRun ? 'DRY RUN / NO PAYMENT OR GENERATION' : 'AWAITING REAL EXECUTION EVIDENCE'; $('#delivery-meta').textContent = 'GLB · AWAITING DELIVERY'; $('#object-id').textContent = 'OBJECT / PENDING'; renderStage(0); $('#object-type').textContent = 'AWAITING A NEW AGENT REQUEST'; $('#accounts').textContent = 'AWAITING PAYMENT'; $('#duration').textContent = '—'; $('#credits').textContent = '—'; $('#transaction').removeAttribute('href'); $('#transaction').title = 'No live transaction yet'; }
 }
 async function runLive() {
   if (liveUsed || !$<HTMLInputElement>('#consent').checked) return;
@@ -171,7 +174,7 @@ async function runLive() {
   if (!intent) { error('Enter an intent for your agent.'); return; }
   running = true; liveUsed = true; toggleModeButtons(true);
   $<HTMLButtonElement>('#run').disabled = true; $<HTMLTextAreaElement>('#intent').readOnly = true;
-  $('#source-label').textContent = 'LIVE EXECUTION · REAL PAYMENT + GENERATION'; $('#run-label').textContent = 'AGENT RUNNING'; $('#error').hidden = true; renderStage(0);
+  $('#source-label').textContent = dryRun ? 'LIVE BRIDGE / DRY RUN · NO PAYMENT' : 'LIVE EXECUTION · REAL PAYMENT + GENERATION'; $('#run-label').textContent = 'AGENT RUNNING'; $('#error').hidden = true; renderStage(0);
   try {
     const response = await fetch('/demo/live', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ intent, confirm: true }) });
     if (!response.ok) throw new Error((await response.json()).error);
@@ -182,6 +185,16 @@ async function runLive() {
       const lines = buffer.split('\n'); buffer = lines.pop()!;
       for (const line of lines) {
         if (!line) continue; const { event, data } = JSON.parse(line);
+        if (event === 'started') { $('#state-label').textContent = 'AGENT STARTED / AWAITING NEBIUS'; }
+        if (event === 'verified' && data.isValid) $('#result-note').textContent = 'Blocky402 verification valid. Awaiting settlement.';
+        if (event === 'dry-run-complete') {
+          completed = true;
+          $('#state-label').textContent = 'DRY RUN COMPLETE / NO ASSET CREATED';
+          $('#result-title').textContent = 'DRY RUN / NO SPENDING';
+          $('#result-note').textContent = data.answer;
+          $('#chamber-note').textContent = 'TOOL SELECTION ONLY / NO PAYMENT OR GENERATION';
+          document.querySelectorAll('.trace .active').forEach(row => row.classList.remove('active'));
+        }
         if (event === 'tool') { renderStage(1); $('#receipt-prompt').textContent = data.arguments.prompt; }
         if (event === 'signed') { $('#accounts').textContent = `${data.payer} → ${data.recipient}`; $<HTMLAnchorElement>('#transaction').href = `https://hashscan.io/testnet/transaction/${encodeURIComponent(data.transactionId)}`; $('#transaction').title = data.transactionId; renderStage(2); $('#result-note').textContent = 'Exact requirements checked. Payment signed.'; }
         if (event === 'settled' && data.success) renderStage(3);
@@ -208,6 +221,12 @@ $('#reset').addEventListener('click', () => chamber.reset());
 $('#evidence-toggle').addEventListener('click', () => { const opened = $('#evidence-detail').hidden; $('#evidence-detail').hidden = !opened; $('#evidence-toggle').setAttribute('aria-expanded', String(opened)); $('#evidence-toggle span').textContent = opened ? '−' : '+'; });
 async function boot() {
   try {
+    const configResponse = await fetch('/demo/config');
+    if (!configResponse.ok) throw new Error('Could not determine the server execution mode.');
+    const config = await configResponse.json();
+    if (!['dry-run', 'live'].includes(config.executionMode)) throw new Error('Unknown server execution mode.');
+    dryRun = config.executionMode === 'dry-run';
+    $('#consent-label').textContent = dryRun ? 'Run real Nebius tool selection only. No payment signing or Tripo generation.' : 'Authorize one 0.001 HBAR payment + one Tripo generation if the agent selects the tool.';
     const response = await fetch('/demo/evidence'); if (!response.ok) throw new Error('Could not read the verified local receipt.');
     replayEvidence = await response.json(); applyEvidence(replayEvidence);
     chamber = createChamber($('#viewport'), fraction => {

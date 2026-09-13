@@ -1,5 +1,5 @@
 import type { Plugin, Connect } from 'vite';
-import { readFile, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { createReadStream } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
@@ -32,6 +32,12 @@ function publicEvidence(r: any) {
 }
 
 export function demoBridge(): Plugin {
+  // Only the local server operator can enable spending; never accept a mode from the browser.
+  const executionMode = process.env.MESH402_UI_EXECUTION ?? 'dry-run';
+  if (!['dry-run', 'live'].includes(executionMode)) throw new Error('MESH402_UI_EXECUTION must be dry-run or live');
+  const dryRun = executionMode === 'dry-run';
+  const executionCwd = dryRun ? resolve(root, 'generated/ui-dry-run') : root;
+  const executionReceipt = resolve(executionCwd, 'generated/mesh402-agent-receipt.json');
   let replay: ReturnType<typeof publicEvidence>;
   let liveAttempted = false;
   const liveIds = new Set<string>();
@@ -63,6 +69,7 @@ export function demoBridge(): Plugin {
         res.setHeader('Cache-Control', 'no-store'); res.end(JSON.stringify(value));
       };
       try {
+        if (path === '/demo/config' && req.method === 'GET') return json(200, { executionMode });
         if (path === '/demo/evidence' && req.method === 'GET') return json(200, replay);
         if (path === '/demo/receipt' && req.method === 'GET') {
           res.setHeader('Content-Disposition', 'attachment; filename="mesh402-verified-run.json"');
@@ -87,17 +94,24 @@ export function demoBridge(): Plugin {
           for await (const chunk of req) { raw += chunk; if (raw.length > 12000) return json(413, { error: 'Request too large' }); }
           const body = JSON.parse(raw);
           if (body.confirm !== true || typeof body.intent !== 'string' || !body.intent.trim() || body.intent.length > 2000) {
-            return json(400, { error: 'An intent and explicit payment confirmation are required' });
+            return json(400, { error: 'An intent and explicit execution confirmation are required' });
           }
+          // Check again after reading the body so concurrent submissions cannot both start.
+          if (liveAttempted) return json(409, { error: 'An execution has already been attempted. No automatic retry.' });
           liveAttempted = true;
-          const previousReceipt = await readFile(receiptPath, 'utf8');
+          await mkdir(executionCwd, { recursive: true });
+          const previousReceipt = await readFile(executionReceipt, 'utf8').catch(error => {
+            if (error.code === 'ENOENT') return null;
+            throw error;
+          });
           res.setHeader('Content-Type', 'application/x-ndjson');
           res.setHeader('Cache-Control', 'no-store');
           res.flushHeaders();
           const send = (event: string, data: unknown) => { if (!res.destroyed) res.write(JSON.stringify({ event, data }) + '\n'); };
-          send('started', {});
-          const child = spawn(process.execPath, ['--env-file=.env.local', '--import', 'tsx', 'scripts/test-agent.ts', '--live', body.intent], {
-            cwd: root, stdio: ['ignore', 'pipe', 'pipe'],
+          const startedAt = Date.now();
+          send('started', { executionMode });
+          const child = spawn(process.execPath, [`--env-file=${resolve(root, '.env.local')}`, '--import', 'tsx', resolve(root, 'scripts/test-agent.ts'), dryRun ? '--dry-run' : '--live', body.intent], {
+            cwd: executionCwd, stdio: ['ignore', 'pipe', 'pipe'],
           });
           let liveRecipient: string | null = null;
           const safeEvents: Record<string, string> = { toolSelection: 'tool', signedPayment: 'signed', verification: 'verified', settlement: 'settled', tripoCreation: 'created', tripoProgress: 'progress' };
@@ -114,20 +128,40 @@ export function demoBridge(): Plugin {
           child.on('error', () => { send('failed', { error: 'Could not start the existing agent CLI. No automatic retry.' }); res.end(); });
           child.on('close', async code => {
             try {
-              const saved = await readFile(receiptPath, 'utf8');
+              const saved = await readFile(executionReceipt, 'utf8');
               if (saved === previousReceipt) throw new Error('No new execution receipt was produced. Previous results will not be presented as live.');
               const receipt = JSON.parse(saved);
               if (receipt.request !== body.intent) throw new Error('Agent did not produce a matching receipt');
+              if (dryRun) {
+                if (receipt.mode !== 'dry-run' || receipt.toolInvocations !== 0 || receipt.serviceEvidence) {
+                  throw new Error('Dry-run receipt failed the non-spending checks');
+                }
+                if (code !== 0) throw new Error(receipt.error ?? 'Agent dry-run failed. No automatic retry.');
+                if (receipt.toolResult && (receipt.toolResult.dryRun !== true || receipt.toolResult.paid !== false || receipt.toolResult.generated !== false)) {
+                  throw new Error('Unexpected dry-run tool result');
+                }
+                send('dry-run-complete', { answer: receipt.finalAnswer, decision: receipt.decision,
+                  toolInvocations: 0, paid: false, generated: false, finalization: receipt.finalization && {
+                    finishReason: receipt.finalization.finishReason, truncated: receipt.finalization.truncated,
+                  } });
+                return;
+              }
               if (receipt.toolResult?.asset?.status === 'success') {
                 const evidence = publicEvidence(receipt);
                 evidence.recipient = liveRecipient;
+                const completedAt = Date.now();
+                await writeFile(resolve(root, 'generated/mesh402-ui-live-receipt.json'), JSON.stringify({
+                  source: 'browser → /demo/live → existing agent CLI',
+                  startedAt: new Date(startedAt).toISOString(), completedAt: new Date(completedAt).toISOString(),
+                  executionMs: completedAt - startedAt, recipient: liveRecipient, receipt,
+                }, null, 2));
                 liveIds.add(evidence.taskId); send('delivered', evidence);
               }
               if (code !== 0) send('failed', { error: receipt.error ?? 'Agent execution failed. No automatic retry.' });
               else if (!receipt.toolResult) send('answer', { answer: receipt.finalAnswer, message: 'Agent answered without spending.' });
               else send('complete', { answer: receipt.finalAnswer });
             } catch (error) { send('failed', { error: error instanceof Error ? error.message : 'Could not read result' }); }
-            res.end();
+            finally { res.end(); }
           });
           return;
         }
